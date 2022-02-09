@@ -17,9 +17,13 @@ spacy-span-analyzer ./path/to/dataset.docbin
 ```
 
 ```python
-from spacy_span_analyzer import analyze
+from spacy_span_analyzer import SpanAnalyzer
+from spacy.tokens import DocBin
 
 # Ensure that your dataset is a DocBin
-my_dataset = DocBin()
-results: Dict = analyze(my_dataset)
+my_dataset = DocBin().from_disk("./path/to/data.spacy")
+analyze = SpanAnalyzer(my_dataset)
+analyze.frequency
+analyze.span_distinctiveness
+analyze.all
 ```
