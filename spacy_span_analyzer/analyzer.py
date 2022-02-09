@@ -1,15 +1,16 @@
 import math
 from collections import Counter
-from typing import Dict, List, Union, Set, Tuple
+from typing import Dict, List, Set, Tuple, Union
 
 from scipy.stats.mstats import gmean
 from spacy.tokens import Doc, Span, SpanGroup, Token
 
 
 class SpanAnalyzer:
-    # TODO: do this for all spans_key
     def __init__(self, docs: List[Doc]):
         self.docs = docs
+        self.p_corpus = self._get_unigram_distribution(self.docs, normalize=True)
+        self.keys = self._get_all_keys()
 
     @property
     def frequency(self) -> Dict[str, Counter]:
@@ -43,18 +44,15 @@ class SpanAnalyzer:
     @property
     def span_distinctiveness(self) -> Dict[str, float]:
         """Distinctiveness of the span compared to the corpus."""
-        p_corpus = self._get_unigram_distribution(self.docs, normalize=True)
-        all_spans_key = self._get_all_keys()
-
         p_spans = {}
-        for key in all_spans_key:
+        for key in self.keys:
             spans = self._get_all_spans_in_key(key)
             p_span = self._get_unigram_distribution(spans, normalize=True)
             p_spans[key] = p_span
 
         # Compute value for each spans_key
         span_distincts = {
-            key: self._get_kl_divergence(p_span, p_corpus)
+            key: self._get_kl_divergence(p_span, self.p_corpus)
             for key, p_span in p_spans.items()
         }
 
@@ -63,8 +61,20 @@ class SpanAnalyzer:
     @property
     def boundary_distinctiveness(self):
         """Distinctiveness of the boundaries compared to the corpus."""
-        # TODO
-        pass
+        p_bounds = {}
+        for key in self.keys:
+            start_bounds, end_bounds = self._get_all_boundaries_in_key(key)
+            bounds = start_bounds + end_bounds
+            p_bound = self._get_unigram_distribution(bounds, normalize=True)
+            p_bounds[key] = p_bound
+
+        # Compute value for each spans_key
+        bound_distincts = {
+            key: self._get_kl_divergence(p_bound, self.p_corpus)
+            for key, p_bound in p_bounds.items()
+        }
+
+        return bound_distincts
 
     def _get_all_keys(self) -> Set[str]:
         """Get all spans_key in the corpus"""
@@ -93,7 +103,9 @@ class SpanAnalyzer:
         return (starts, ends)
 
     def _get_unigram_distribution(
-        self, texts: Union[List[Doc], List[SpanGroup]], normalize: bool = True
+        self,
+        texts: Union[List[Doc], List[SpanGroup], List[Token]],
+        normalize: bool = True,
     ) -> Counter:
         """Get each word's sample frequency given a list of text"""
         word_counts = Counter()
