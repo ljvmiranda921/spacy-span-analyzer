@@ -1,16 +1,15 @@
 import math
 from collections import Counter
-from typing import Dict, List, Union, Set
+from typing import Dict, List, Union, Set, Tuple
 
 from scipy.stats.mstats import gmean
-from spacy.tokens import Doc, DocBin, Span, SpanGroup
-from spacy.vocab import Vocab
+from spacy.tokens import Doc, Span, SpanGroup, Token
 
 
 class SpanAnalyzer:
     # TODO: do this for all spans_key
-    def __init__(self, doc_bin: DocBin, vocab: Vocab):
-        self.docs: List[Doc] = list(doc_bin.get_docs(vocab))
+    def __init__(self, docs: List[Doc]):
+        self.docs = docs
 
     @property
     def frequency(self) -> Dict[str, Counter]:
@@ -68,17 +67,30 @@ class SpanAnalyzer:
         pass
 
     def _get_all_keys(self) -> Set[str]:
+        """Get all spans_key in the corpus"""
         return set([key for doc in self.docs for key in list(doc.spans.keys())])
 
     def _get_all_spans_in_key(self, spans_key: str) -> List[Span]:
+        """Get all spans given a specified spans_key"""
         return [span for doc in self.docs for span in doc.spans[spans_key]]
 
-    def _get_all_boundaries_in_key(self, spans_key: str):
-        # TODO
-        # for each span
-        # get the token before it
-        # get the token after it
-        pass
+    def _get_all_boundaries_in_key(
+        self, spans_key: str
+    ) -> Tuple[List[Token], List[Token]]:
+        """Get the boundary tokens for all spans in a spans_key"""
+        starts: List[Token] = []
+        ends: List[Token] = []
+        for doc in self.docs:
+            for span in doc.spans[spans_key]:
+                span_bound_start_idx = span.start - 1
+                if span_bound_start_idx >= 0:
+                    starts.append(doc[span_bound_start_idx])
+
+                span_bound_end_idx = span.end + 1
+                if span_bound_end_idx <= len(doc):
+                    ends.append(doc[span_bound_end_idx])
+
+        return (starts, ends)
 
     def _get_unigram_distribution(
         self, texts: Union[List[Doc], List[SpanGroup]], normalize: bool = True
