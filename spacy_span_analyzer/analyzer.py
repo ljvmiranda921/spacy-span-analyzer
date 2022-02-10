@@ -14,7 +14,13 @@ class SpanAnalyzer:
 
     @property
     def frequency(self) -> Dict[str, Counter]:
-        """Number of spans for a span type in the dataset's training corpus."""
+        """Number of spans for a span type in the dataset's training corpus.
+
+        Frequency tends to be positively correlated with performance. However,
+        architectural choices (like the use of transfer learning) can reduce
+        data requirements for ML models. For such architectures, there is a
+        small correlation between frequency and performance.
+        """
         frequency = {}
         for doc in self.docs:
             for spans_key in list(doc.spans.keys()):
@@ -29,7 +35,13 @@ class SpanAnalyzer:
 
     @property
     def length(self) -> Dict[str, float]:
-        """Geometric mean of the spans' lengths in tokens."""
+        """Geometric mean of the spans' lengths in tokens.
+
+        Traditional CRF models tend to perform poorly at the identification of
+        long spans due to their strict Markov assumption. Architectures that
+        rely on such assumptions should follow the same pattern. On the other
+        hand, LSTMs or Transformers should do better on long spans.
+        """
         _length = {}
         for doc in self.docs:
             for spans_key in list(doc.spans.keys()):
@@ -43,7 +55,22 @@ class SpanAnalyzer:
 
     @property
     def span_distinctiveness(self) -> Dict[str, float]:
-        """Distinctiveness of the span compared to the corpus."""
+        """Distinctiveness of the span compared to the corpus.
+
+        Measures how distinct the text comprising the spans compared to the
+        rest of the corpus. It is defined as the KL divergence D(P_span || P),
+        where P is the unigram word distribution of the corpus, and P_span as
+        the unigram distribution of tokens within the span.
+
+        High values indicate that different words are used inside spans
+        compared to the rest of the text, whereas low values indicate that the
+        word distribution is similar inside and outside of spans.
+
+        This property is positively correlated with model performance. Spans
+        with high distinctiveness should be able to rely more heavily on local
+        features, as each token carries information about span membership. Low
+        span distrinctivess then calls for sequence information.
+        """
         p_spans = {}
         for key in self.keys:
             spans = self._get_all_spans_in_key(key)
@@ -60,7 +87,17 @@ class SpanAnalyzer:
 
     @property
     def boundary_distinctiveness(self):
-        """Distinctiveness of the boundaries compared to the corpus."""
+        """Distinctiveness of the boundaries compared to the corpus.
+
+        Measures how distinctive the starts and ends of spans are. It is
+        formalized as the KL-divergence D(P_bounds || P) where P is the unigram
+        word distribution of the corpus, and P_bounds as the unigram
+        distribution of the boundary tokens.
+
+        This property is positively correlated with model performance. High
+        values mean that the start and end points of spans are easy to spot,
+        while low values indicate smooth transitions.
+        """
         p_bounds = {}
         for key in self.keys:
             start_bounds, end_bounds = self._get_all_boundaries_in_key(key)
