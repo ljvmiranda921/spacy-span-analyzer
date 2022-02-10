@@ -1,4 +1,4 @@
-# 🪐 [WIP] spacy-span-analyzer
+# spacy-span-analyzer
 
 A simple tool to analyze the [Spans](https://spacy.io/api/span) in your
 dataset. It's tightly integrated with
@@ -7,6 +7,21 @@ to existing NLP pipelines. This is also a reproduction of Papay, et al's work on
 Identification Tasks with Performance
 Prediction*](https://aclanthology.org/2020.emnlp-main.396.pdf) (EMNLP 2020).
 
+## ⏳ Install
+
+Using pip:
+
+```sh
+pip install spacy-span-analyzer
+```
+
+Directly from source:
+
+```sh
+git clone git@github.com:ljvmiranda921/spacy-span-analyzer.git
+cd spacy-span-analyzer
+python setup.py install
+```
 
 ## ⏯ Usage
 
