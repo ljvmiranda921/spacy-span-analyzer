@@ -10,20 +10,29 @@ Prediction*](https://aclanthology.org/2020.emnlp-main.396.pdf) (EMNLP 2020).
 
 ## ⏯ Usage
 
-You can use the Span Analyzer both as a command-line tool and library:
+You can use the Span Analyzer as a command-line tool:
 
 ```sh
 spacy-span-analyzer ./path/to/dataset.spacy
 ```
 
+Or as an imported library:
+
 ```python
-from spacy_span_analyzer import SpanAnalyzer
+import spacy
 from spacy.tokens import DocBin
+from spacy_span_analyzer import SpanAnalyzer
+
+nlp = spacy.blank("en")  # or any Language model
 
 # Ensure that your dataset is a DocBin
-my_dataset = DocBin().from_disk("./path/to/data.spacy")
-analyze = SpanAnalyzer(my_dataset)
-analyze.frequency
+doc_bin = DocBin().from_disk("./path/to/data.spacy")
+docs = list(doc_bin.get_docs(nlp.vocab))
+
+# Run SpanAnalyzer and get span characteristics
+analyze = SpanAnalyzer(docs)
+analyze.frequency  
+analyze.length
 analyze.span_distinctiveness
-analyze.all
+analyze.boundary_distinctiveness
 ```
