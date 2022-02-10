@@ -9,7 +9,7 @@ from spacy.tokens import Doc, Span, SpanGroup, Token
 class SpanAnalyzer:
     def __init__(self, docs: List[Doc]):
         self.docs = docs
-        self.p_corpus = self._get_unigram_distribution(self.docs, normalize=True)
+        self.p_corpus = self._get_distribution(self.docs, normalize=True)
         self.keys = self._get_all_keys()
 
     @property
@@ -47,7 +47,7 @@ class SpanAnalyzer:
         p_spans = {}
         for key in self.keys:
             spans = self._get_all_spans_in_key(key)
-            p_span = self._get_unigram_distribution(spans, normalize=True)
+            p_span = self._get_distribution(spans, normalize=True)
             p_spans[key] = p_span
 
         # Compute value for each spans_key
@@ -65,7 +65,7 @@ class SpanAnalyzer:
         for key in self.keys:
             start_bounds, end_bounds = self._get_all_boundaries_in_key(key)
             bounds = start_bounds + end_bounds
-            p_bound = self._get_unigram_distribution(bounds, normalize=True)
+            p_bound = self._get_distribution(bounds, normalize=True, unigrams=True)
             p_bounds[key] = p_bound
 
         # Compute value for each spans_key
@@ -97,21 +97,25 @@ class SpanAnalyzer:
                     starts.append(doc[span_bound_start_idx])
 
                 span_bound_end_idx = span.end + 1
-                if span_bound_end_idx <= len(doc):
+                if span_bound_end_idx < len(doc):
                     ends.append(doc[span_bound_end_idx])
 
         return (starts, ends)
 
-    def _get_unigram_distribution(
+    def _get_distribution(
         self,
         texts: Union[List[Doc], List[SpanGroup], List[Token]],
         normalize: bool = True,
+        unigrams: bool = False,
     ) -> Counter:
         """Get each word's sample frequency given a list of text"""
         word_counts = Counter()
         for text in texts:
-            for token in text:
-                word_counts[self._normalize_text(token.text)] += 1
+            if unigrams:
+                word_counts[self._normalize_text(text.text)] += 1
+            else:
+                for token in text:
+                    word_counts[self._normalize_text(token.text)] += 1
 
         if normalize:
             total = sum(word_counts.values(), 0.0)
@@ -129,7 +133,7 @@ class SpanAnalyzer:
             total += p_word * math.log(p_word / q[word])
         return total
 
-    def _normalize_text(text: str) -> str:
+    def _normalize_text(self, text: str) -> str:
         # The source code from the paper converts all digits into a single
         # value, '0'. Perhaps this is a way to "normalize" all numerical value
         # I'm not sure if this is generalizable so I'll comment it out for the meantime.
