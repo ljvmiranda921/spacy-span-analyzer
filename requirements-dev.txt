@@ -1,4 +1,9 @@
+# Testing
 pytest
+# Development
 black
 isort
 flake8
+# Packaging
+wheel
+twine
