@@ -9,18 +9,20 @@ Prediction*](https://aclanthology.org/2020.emnlp-main.396.pdf) (EMNLP 2020).
 
 ## ⏳ Install
 
-Using pip:
+Using
+[pip](https://packaging.python.org/en/latest/tutorials/installing-packages/):
 
 ```sh
 pip install spacy-span-analyzer
 ```
 
-Directly from source:
+Directly from source (I highly recommend running this within a [virtual
+environment](https://docs.python.org/3/tutorial/venv.html#creating-virtual-environments)):
 
 ```sh
 git clone git@github.com:ljvmiranda921/spacy-span-analyzer.git
 cd spacy-span-analyzer
-python setup.py install
+pip install .
 ```
 
 ## ⏯ Usage
