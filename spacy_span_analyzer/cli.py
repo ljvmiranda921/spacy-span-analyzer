@@ -10,6 +10,10 @@ from wasabi import msg
 from .analyzer import SpanAnalyzer
 
 
+app = typer.Typer()
+
+
+@app.command()
 def main(
     input_path: Path = typer.Argument(
         ..., exists=True, dir_okay=False, help="Path to .spacy file"
@@ -73,4 +77,4 @@ def msg_template(
 
 
 if __name__ == "__main__":
-    typer.run(main)
+    app()
