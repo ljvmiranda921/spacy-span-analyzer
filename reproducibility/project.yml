@@ -9,3 +9,30 @@ description: |
   - I will add a few datasets to increase the breadth of this study. In particular, I'll
     be checking some of the nested NER datasets from Yu, et al's work (2020) on
     *Named Entity Recognition as Dependency Parsing*.
+
+# These are the directories that the project needs. The project CLI will make
+# sure that they always exist.
+directories: ["assets", "corpora", "scripts"]
+
+# Workflows are sequences of commands (see below) executed in order. You can
+# run them via "spacy project run [workflow]". If a commands's inputs/outputs
+# haven't changed, it won't be re-run.
+workflows:
+  parse-all:
+    - parse-ontonotes
+    - parse-riqua
+    - parse-parc
+
+# Project commands, specified in a style similar to CI config files (e.g. Azure
+# pipelines). The name is the command name that lets you trigger the command
+# via "spacy project run [command] [path]". The help message is optional and
+# shown when executing "spacy project run [optional command] [path] --help".
+commands:
+  - name: "install"
+    help: "Install dependencies"
+    script:
+      - "pip3 install --user -r requirements.txt"
+  - name: "parse-riqua"
+    help: "Parse the RiQuA quotation dataset into the spaCy format."
+    script:
+      - "python3 -m scripts.riqua"
