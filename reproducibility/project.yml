@@ -1,0 +1,11 @@
+title: "Reproducibility Study for Span Type Characteristics"
+description: |
+  This project aims to reproduce the metrics reported by the paper,
+  *Dissecting Span Identification Tasks with Performance Prediction* (Papay, et
+  *al, 2020) with a few changes:
+
+  - I will only reproduce the span characteristics (length, distinctiveness,
+    etc.) to check if the span analyzer is working as intended.
+  - I will add a few datasets to increase the breadth of this study. In particular, I'll
+    be checking some of the nested NER datasets from Yu, et al's work (2020) on
+    *Named Entity Recognition as Dependency Parsing*.
