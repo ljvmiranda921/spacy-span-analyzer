@@ -53,3 +53,38 @@ analyze.length
 analyze.span_distinctiveness
 analyze.boundary_distinctiveness
 ```
+
+Inputs are expected to be a list of spaCy [Docs](https://spacy.io/api/doc) or a [DocBin](https://spacy.io/api/docbin) (if you're using
+the command-line tool).
+
+### Working with Spans
+
+In spaCy, you'd want to store your Spans in the
+[`doc.spans`](https://spacy.io/api/doc#spans) property, under a particular
+`spans_key` (`sc` by default). Unlike the
+[`doc.ents`](https://spacy.io/api/doc#ents) property, `doc.spans` allows
+overlapping entities. This is useful especially for downstream tasks like [Span
+Categorization](https://spacy.io/api/spancategorizer). 
+
+A common way to do this is to use
+[`char_span`](https://spacy.io/api/doc#char_span) to define a slice from your
+Doc:
+
+```python
+doc = nlp(text)
+spans = []
+from annotation in annotations:
+    span = doc.char_span(
+        annotation["start"],
+        annotation["end"],
+        annotation["label"],
+    )
+    spans.append(span)
+
+# Put all spans under a spans_key
+doc.spans["sc"] = spans
+```
+
+You can also achieve the same thing by using
+[`set_ents`](https://spacy.io/api/doc#set_ents) or by creating a 
+[SpanGroup](https://spacy.io/api/spangroup).
