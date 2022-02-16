@@ -2,8 +2,27 @@ import math
 from collections import Counter
 from typing import Dict, List, Set, Tuple, Union
 
+import numpy as np
 from scipy.stats.mstats import gmean
 from spacy.tokens import Doc, Span, SpanGroup, Token
+
+
+FrequencyDist = Dict[str, float]
+SpanBoundaries = Dict[str, List[str]]
+
+
+def weighted_average(
+    span_metrics: Dict[str, Dict[str, float]],
+    frequencies: Dict[str, Counter],
+) -> Dict[str, float]:
+    weighted_average = {}
+    for spans_key, span_type_dict in span_metrics.items():
+        weighted_average[spans_key] = np.average(
+            list(span_type_dict.values()),
+            weights=list(frequencies[spans_key].values()),
+        )
+
+    return weighted_average
 
 
 class SpanAnalyzer:
@@ -34,7 +53,7 @@ class SpanAnalyzer:
         return frequency
 
     @property
-    def length(self) -> Dict[str, float]:
+    def length(self) -> Dict[str, Dict[str, float]]:
         """Geometric mean of the spans' lengths in tokens.
 
         Traditional CRF models tend to perform poorly at the identification of
@@ -46,11 +65,22 @@ class SpanAnalyzer:
         for doc in self.docs:
             for spans_key in list(doc.spans.keys()):
                 if spans_key not in _length:
-                    _length[spans_key] = []
+                    _length[spans_key] = {}
                 for span in doc.spans[spans_key]:
-                    _length[spans_key].append(len(span))
+                    if span.label_ is None:
+                        continue
+                    elif span.label_ not in _length[spans_key]:
+                        _length[spans_key][span.label_] = []
+                    else:
+                        _length[spans_key][span.label_].append(len(span))
 
-        length = {spans_key: gmean(lengths) for spans_key, lengths in _length.items()}
+        # Compute for the geometric mean for each span type
+        length = {}
+        for spans_key, span_type_dict in _length.items():
+            length[spans_key] = {}
+            for span_type, lengths in span_type_dict.items():
+                length[spans_key][span_type] = gmean(lengths)
+
         return length
 
     @property
@@ -71,18 +101,22 @@ class SpanAnalyzer:
         features, as each token carries information about span membership. Low
         span distrinctivess then calls for sequence information.
         """
-        p_spans = {}
+        p_spans: Dict[str, Dict[str, FrequencyDist]] = {}
         for key in self.keys:
-            spans = self._get_all_spans_in_key(key)
-            p_span = self._get_distribution(spans, normalize=True)
-            p_spans[key] = p_span
+            p_spans[key] = {}
+            spans_per_type = self._get_all_spans_in_key(key)
+            for span_type, spans in spans_per_type.items():
+                p_span = self._get_distribution(spans, normalize=True)
+                p_spans[key][span_type] = p_span
 
         # Compute value for each spans_key
-        span_distincts = {
-            key: self._get_kl_divergence(p_span, self.p_corpus)
-            for key, p_span in p_spans.items()
-        }
-
+        span_distincts: Dict[str, Dict[str, float]] = {}
+        for spans_key, freq_per_type in p_spans.items():
+            span_distincts[spans_key] = {}
+            for span_type, frequency_dist in freq_per_type.items():
+                span_distincts[spans_key][span_type] = self._get_kl_divergence(
+                    frequency_dist, self.p_corpus
+                )
         return span_distincts
 
     @property
@@ -98,18 +132,23 @@ class SpanAnalyzer:
         values mean that the start and end points of spans are easy to spot,
         while low values indicate smooth transitions.
         """
-        p_bounds = {}
+        p_bounds: Dict[str, Dict[str, FrequencyDist]] = {}
         for key in self.keys:
-            start_bounds, end_bounds = self._get_all_boundaries_in_key(key)
-            bounds = start_bounds + end_bounds
-            p_bound = self._get_distribution(bounds, normalize=True, unigrams=True)
-            p_bounds[key] = p_bound
+            p_bounds[key] = {}
+            span_boundaries_per_type = self._get_all_boundaries_in_key(key)
+            for span_type, span_bounds in span_boundaries_per_type.items():
+                bounds = span_bounds["start"] + span_bounds["end"]
+                p_bound = self._get_distribution(bounds, normalize=True, unigrams=True)
+                p_bounds[key][span_type] = p_bound
 
         # Compute value for each spans_key
-        bound_distincts = {
-            key: self._get_kl_divergence(p_bound, self.p_corpus)
-            for key, p_bound in p_bounds.items()
-        }
+        bound_distincts: Dict[str, Dict[str, float]] = {}
+        for spans_key, freq_per_type in p_bounds.items():
+            bound_distincts[spans_key] = {}
+            for span_type, frequency_dist in freq_per_type.items():
+                bound_distincts[spans_key][span_type] = self._get_kl_divergence(
+                    frequency_dist, self.p_corpus
+                )
 
         return bound_distincts
 
@@ -117,27 +156,44 @@ class SpanAnalyzer:
         """Get all spans_key in the corpus"""
         return set([key for doc in self.docs for key in list(doc.spans.keys())])
 
-    def _get_all_spans_in_key(self, spans_key: str) -> List[Span]:
-        """Get all spans given a specified spans_key"""
-        return [span for doc in self.docs for span in doc.spans[spans_key]]
+    def _get_all_spans_in_key(self, spans_key: str) -> Dict[str, List[Span]]:
+        """Get all spans given a specified spans_key
 
-    def _get_all_boundaries_in_key(
-        self, spans_key: str
-    ) -> Tuple[List[Token], List[Token]]:
-        """Get the boundary tokens for all spans in a spans_key"""
-        starts: List[Token] = []
-        ends: List[Token] = []
+        Returns a dictionary where the keys are the span types and
+        the values are the list of Spans within that span type.
+        """
+        spans: Dict[str, List[Span]] = {}
         for doc in self.docs:
             for span in doc.spans[spans_key]:
-                span_bound_start_idx = span.start - 1
-                if span_bound_start_idx >= 0:
-                    starts.append(doc[span_bound_start_idx])
+                if span.label_ not in spans:
+                    spans[span.label_] = []
+                else:
+                    spans[span.label_].append(span)
 
-                span_bound_end_idx = span.end + 1
-                if span_bound_end_idx < len(doc):
-                    ends.append(doc[span_bound_end_idx])
+        return spans
 
-        return (starts, ends)
+    def _get_all_boundaries_in_key(self, spans_key: str) -> Dict[str, SpanBoundaries]:
+        """Get the boundary tokens for all spans in a spans_key
+
+        Returns a dictionary where the keys are the span types and
+        the values are a tuple of lists for the start and end span
+        boundaries.
+        """
+        bounds: Dict[str, SpanBoundaries] = {}
+        for doc in self.docs:
+            for span in doc.spans[spans_key]:
+                if span.label_ not in bounds:
+                    bounds[span.label_] = {"start": [], "end": []}
+                else:
+                    # Get span boundaries
+                    span_bound_start_idx = span.start - 1
+                    if span_bound_start_idx >= 0:
+                        bounds[span.label_]["start"].append(doc[span_bound_start_idx])
+
+                    span_bound_end_idx = span.end + 1
+                    if span_bound_end_idx < len(doc):
+                        bounds[span.label_]["end"].append(doc[span_bound_end_idx])
+        return bounds
 
     def _get_distribution(
         self,
