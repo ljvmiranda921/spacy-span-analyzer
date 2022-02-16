@@ -7,7 +7,7 @@ import typer
 from spacy.tokens import Doc, DocBin
 from wasabi import msg
 
-from .analyzer import SpanAnalyzer
+from .analyzer import SpanAnalyzer, weighted_average
 
 
 app = typer.Typer()
@@ -27,6 +27,7 @@ def main(
 ):
     nlp = spacy.load(spacy_model) if spacy_model else spacy.blank("en")
 
+    # Read DocBin file
     doc_bin = DocBin().from_disk(input_path)
     docs: List[Doc] = list(doc_bin.get_docs(nlp.vocab))
     msg.info(f"Loaded {len(docs)} from {input_path}")
@@ -35,45 +36,65 @@ def main(
     analyzer = SpanAnalyzer(docs)
     msg.text(f"Spans Keys: {list(analyzer.keys)}")
 
-    msg.divider("Span Type Frequency")
-    if verbose:
-        msg.text(cleandoc(SpanAnalyzer.frequency.__doc__))
-    for span_key, counts in analyzer.frequency.items():
-        msg.text(f"In span_key: {span_key}")
-        msg.table(counts, header=("Span Type", "Frequency"), divider=True)
+    # Store in a variable because we will reuse this
+    frequencies = analyzer.frequency
 
     msg_template(
-        analyzer.length,
-        "Span Length",
-        ("Span Key", "Length"),
-        SpanAnalyzer.length.__doc__,
+        data=analyzer.frequency,
+        divider="Span Type Frequency",
+        header=("Span Type", "Frequency"),
+        doc=SpanAnalyzer.frequency.__doc__,
         verbose=verbose,
     )
 
     msg_template(
-        analyzer.span_distinctiveness,
-        "Span Distinctiveness",
-        ("Span Key", "Span Distinctiveness"),
-        SpanAnalyzer.span_distinctiveness.__doc__,
+        data=analyzer.length,
+        divider="Span Type Length",
+        header=("Span Type", "Length"),
+        doc=SpanAnalyzer.length.__doc__,
         verbose=verbose,
+        frequencies=frequencies,
     )
 
     msg_template(
-        analyzer.boundary_distinctiveness,
-        "Span Boundary Distinctiveness",
-        ("Span Key", "Boundary Distinctiveness"),
-        SpanAnalyzer.boundary_distinctiveness.__doc__,
+        data=analyzer.span_distinctiveness,
+        divider="Span Distinctiveness",
+        header=("Span Key", "Span Distinctiveness"),
+        doc=SpanAnalyzer.span_distinctiveness.__doc__,
         verbose=verbose,
+        frequencies=frequencies,
+    )
+
+    msg_template(
+        data=analyzer.boundary_distinctiveness,
+        divider="Span Boundary Distinctiveness",
+        header=("Span Key", "Boundary Distinctiveness"),
+        doc=SpanAnalyzer.boundary_distinctiveness.__doc__,
+        verbose=verbose,
+        frequencies=frequencies,
     )
 
 
 def msg_template(
-    data: Dict[str, Any], divider: str, header: Tuple, doc: str, verbose: bool
+    data: Dict[str, Any],
+    divider: str,
+    header: Tuple,
+    doc: str,
+    verbose: bool,
+    frequencies: Optional[Dict[str, float]] = None,
 ):
     msg.divider(divider)
     if verbose:
         msg.text(cleandoc(doc))
-    msg.table(data, header=header, divider=True)
+    for spans_key, values in data.items():
+        msg.text(f"In spans key: {spans_key}")
+        msg.table(values, header=header, divider=True)
+
+    if frequencies:
+        # Compute weighted average
+        w_avg = weighted_average(data, frequencies)
+        msg.text("Weighted Average (by frequency)")
+        msg.table(w_avg, header=("Spans Key", "Average"), divider=True)
 
 
 if __name__ == "__main__":
