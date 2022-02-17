@@ -1,6 +1,6 @@
 title: "Reproducibility Study for Span Type Characteristics"
 description: |
-  This project aims to reproduce the metrics reported by the paper,
+  This project aims to reproduce some of the metrics reported by the paper,
   *Dissecting Span Identification Tasks with Performance Prediction* (Papay, et
   *al, 2020) with a few changes:
 
@@ -12,16 +12,14 @@ description: |
 
 # These are the directories that the project needs. The project CLI will make
 # sure that they always exist.
-directories: ["assets", "corpora", "scripts"]
+directories: ["assets", "corpus", "scripts"]
 
 # Workflows are sequences of commands (see below) executed in order. You can
 # run them via "spacy project run [workflow]". If a commands's inputs/outputs
 # haven't changed, it won't be re-run.
 workflows:
   parse-all:
-    - parse-ontonotes
     - parse-riqua
-    - parse-parc
 
 # Project commands, specified in a style similar to CI config files (e.g. Azure
 # pipelines). The name is the command name that lets you trigger the command
@@ -33,6 +31,14 @@ commands:
     script:
       - "pip3 install --user -r requirements.txt"
   - name: "parse-riqua"
-    help: "Parse the RiQuA quotation dataset into the spaCy format."
+    help: "Parse the RiQuA (Rich Quotation Analysis) quotation dataset into the spaCy format."
     script:
       - "python3 -m scripts.riqua"
+  - name: "analyze-riqua"
+    help: "Get span analysis for the RiQuA quotation dataset."
+    script:
+      - "spacy-span-analyzer corpus/riqua.spacy"
+  - name: "parse-conll2003"
+    help: "Parse the ConLL 2003 English dataset into the spaCy format (using Spans)."
+    script:
+      - "python3 -m scripts.conll --dataset conll2000"
