@@ -1,6 +1,6 @@
 import tarfile
 from pathlib import Path
-from typing import List, Union, Set
+from typing import List, Set, Union
 
 import requests
 import spacy
