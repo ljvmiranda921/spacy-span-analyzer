@@ -3,3 +3,4 @@ typer
 numpy
 requests
 tqdm
+datasets 
