@@ -21,6 +21,9 @@ def main(
     spacy_model: Optional[str] = typer.Option(
         None, help="Loadable spaCy pipeline (uses spacy.blank('en') if not provided)"
     ),
+    window_size: int = typer.Option(
+        1, help="Window size to consider for the span boundaries"
+    ),
     verbose: bool = typer.Option(
         False, "--verbose", help="Show descriptions for each span property"
     ),
@@ -33,7 +36,7 @@ def main(
     msg.info(f"Loaded {len(docs)} from {input_path}")
 
     # Perform span analysis
-    analyzer = SpanAnalyzer(docs)
+    analyzer = SpanAnalyzer(docs, window_size=window_size)
     msg.text(f"Spans Keys: {list(analyzer.keys)}")
 
     # Store in a variable because we will reuse this
@@ -67,7 +70,7 @@ def main(
 
     msg_template(
         data=analyzer.boundary_distinctiveness,
-        divider="Span Boundary Distinctiveness",
+        divider=f"Span Boundary Distinctiveness (window={analyzer.window_size})",
         header=("Span Key", "Boundary Distinctiveness"),
         doc=SpanAnalyzer.boundary_distinctiveness.__doc__,
         verbose=verbose,
