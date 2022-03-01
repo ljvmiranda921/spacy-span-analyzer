@@ -1,4 +1,5 @@
 spacy>=3.1.0
+textacy
 scipy
 numpy
 # CLI
