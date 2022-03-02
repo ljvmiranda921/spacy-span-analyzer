@@ -18,8 +18,10 @@ directories: ["assets", "corpus", "scripts"]
 # run them via "spacy project run [workflow]". If a commands's inputs/outputs
 # haven't changed, it won't be re-run.
 workflows:
-  parse-all:
-    - parse-riqua
+  analyze-all:
+    - riqua
+    - conll2000
+    - conll2003
 
 # Project commands, specified in a style similar to CI config files (e.g. Azure
 # pipelines). The name is the command name that lets you trigger the command
@@ -30,15 +32,18 @@ commands:
     help: "Install dependencies"
     script:
       - "pip3 install --user -r requirements.txt"
-  - name: "parse-riqua"
-    help: "Parse the RiQuA (Rich Quotation Analysis) quotation dataset into the spaCy format."
+  - name: "riqua"
+    help: "Parse and analyze the RiQuA (Rich Quotation Analysis) quotation dataset into the spaCy format."
     script:
       - "python3 -m scripts.riqua"
-  - name: "analyze-riqua"
-    help: "Get span analysis for the RiQuA quotation dataset."
-    script:
       - "spacy-span-analyzer corpus/riqua.spacy"
-  - name: "parse-conll2003"
+  - name: "conll2000"
     help: "Parse the ConLL 2003 English dataset into the spaCy format (using Spans)."
     script:
       - "python3 -m scripts.conll --dataset conll2000"
+      - "spacy-span-analyzer corpus/conll2000.spacy"
+  - name: "conll2003"
+    help: "Parse and analyze the ConLL 2003 English dataset into the spaCy format (using Spans)."
+    script:
+      - "python3 -m scripts.conll --dataset conll2003"
+      - "spacy-span-analyzer corpus/conll2003.spacy"

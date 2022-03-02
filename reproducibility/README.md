@@ -2,7 +2,7 @@
 
 # 🪐 spaCy Project: Reproducibility Study for Span Type Characteristics
 
-This project aims to reproduce the metrics reported by the paper,
+This project aims to reproduce some of the metrics reported by the paper,
 *Dissecting Span Identification Tasks with Performance Prediction* (Papay, et
 *al, 2020) with a few changes:
 
@@ -28,9 +28,9 @@ Commands are only re-run if their inputs have changed.
 | Command | Description |
 | --- | --- |
 | `install` | Install dependencies |
-| `parse-riqua` | Parse the RiQuA (Rich Quotation Analysis) quotation dataset into the spaCy format. |
-| `analyze-riqua` | Get span analysis for the RiQuA quotation dataset. |
-| `parse-parc` | Parse the PARC (Penn Attribution Relation Corpus) dataset into the spaCy format. |
+| `riqua` | Parse and analyze the RiQuA (Rich Quotation Analysis) quotation dataset into the spaCy format. |
+| `conll2000` | Parse the ConLL 2003 English dataset into the spaCy format (using Spans). |
+| `conll2003` | Parse and analyze the ConLL 2003 English dataset into the spaCy format (using Spans). |
 
 ### ⏭ Workflows
 
@@ -41,6 +41,6 @@ inputs have changed.
 
 | Workflow | Steps |
 | --- | --- |
-| `parse-all` | `parse-riqua` |
+| `analyze-all` | `riqua` &rarr; `conll2000` &rarr; `conll2003` |
 
 <!-- SPACY PROJECT: AUTO-GENERATED DOCS END (do not remove) -->
