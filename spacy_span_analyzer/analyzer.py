@@ -3,6 +3,7 @@ from collections import Counter
 from typing import Dict, List, Set, Tuple, Union
 
 import numpy as np
+from textacy.extract.basics import ngrams
 from scipy.stats.mstats import gmean
 from spacy.tokens import Doc, Span, SpanGroup, Token
 
@@ -141,7 +142,7 @@ class SpanAnalyzer:
             )
             for span_type, span_bounds in span_boundaries_per_type.items():
                 bounds = span_bounds["start"] + span_bounds["end"]
-                p_bound = self._get_distribution(bounds, normalize=True, unigrams=True)
+                p_bound = self._get_distribution(bounds, normalize=True)
                 p_bounds[key][span_type] = p_bound
 
         # Compute value for each spans_key
@@ -191,32 +192,32 @@ class SpanAnalyzer:
                     bounds[span.label_] = {"start": [], "end": []}
                 else:
                     # Get span boundaries within a window
+                    # We append Spans instead of Tokens so that it's consistent
+                    # with the _get_distribution() method
                     for offset in range(window_size):
                         span_bound_start_idx = span.start - (offset + 1)
                         if span_bound_start_idx >= 0:
                             bounds[span.label_]["start"].append(
-                                doc[span_bound_start_idx]
+                                doc[span_bound_start_idx : span_bound_start_idx + 1]
                             )
 
                         span_bound_end_idx = span.end + (offset + 1)
                         if span_bound_end_idx < len(doc):
-                            bounds[span.label_]["end"].append(doc[span_bound_end_idx])
+                            bounds[span.label_]["end"].append(
+                                doc[span_bound_end_idx : span_bound_end_idx + 1]
+                            )
         return bounds
 
     def _get_distribution(
         self,
-        texts: Union[List[Doc], List[SpanGroup], List[Token]],
+        texts: Union[List[Doc], List[SpanGroup]],
         normalize: bool = True,
-        unigrams: bool = False,
     ) -> Counter:
         """Get each word's sample frequency given a list of text"""
         word_counts = Counter()
         for text in texts:
-            if unigrams:
-                word_counts[self._normalize_text(text.text)] += 1
-            else:
-                for token in text:
-                    word_counts[self._normalize_text(token.text)] += 1
+            for token in text:
+                word_counts[self._normalize_text(token.text)] += 1
 
         if normalize:
             total = sum(word_counts.values(), 0.0)
