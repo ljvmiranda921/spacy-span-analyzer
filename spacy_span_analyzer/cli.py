@@ -1,3 +1,4 @@
+import json
 from inspect import cleandoc
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
@@ -17,6 +18,9 @@ app = typer.Typer()
 def main(
     input_path: Path = typer.Argument(
         ..., exists=True, dir_okay=False, help="Path to .spacy file"
+    ),
+    output: Path = typer.Option(
+        None, exists=False, dir_okay=False, help="Path to save metrics as JSON file"
     ),
     spacy_model: Optional[str] = typer.Option(
         None, help="Loadable spaCy pipeline (uses spacy.blank('en') if not provided)"
@@ -43,7 +47,7 @@ def main(
     frequencies = analyzer.frequency
 
     msg_template(
-        data=analyzer.frequency,
+        data=frequencies,
         divider="Span Type Frequency",
         header=("Span Type", "Frequency"),
         doc=SpanAnalyzer.frequency.__doc__,
@@ -76,6 +80,20 @@ def main(
         verbose=verbose,
         frequencies=frequencies,
     )
+
+    if output:
+        output_dict = {
+            "metrics": {
+                "frequencies": dict(analyzer.frequency),
+                "length": analyzer.length,
+                "span_distinctiveness": analyzer.span_distinctiveness,
+                "boundary_distinctiveness": analyzer.boundary_distinctiveness,
+            },
+            "config": {"window_size": analyzer.window_size},
+        }
+        with output.open("w") as output_file:
+            json.dump(output_dict, output_file, indent=4)
+        msg.good(f"Saved to {output}!")
 
 
 def msg_template(
