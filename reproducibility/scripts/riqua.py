@@ -5,8 +5,7 @@ from typing import List, Set, Union
 import requests
 import spacy
 import typer
-from spacy.tokens import Doc, DocBin, Span, SpanGroup
-from spacy.training.converters import conll_ner_to_docs
+from spacy.tokens import Doc, DocBin
 from tqdm import tqdm
 from wasabi import msg
 
