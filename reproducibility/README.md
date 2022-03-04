@@ -2,15 +2,15 @@
 
 # 🪐 spaCy Project: Reproducibility Study for Span Type Characteristics
 
-This project aims to reproduce the metrics reported by the paper,
+This project aims to reproduce some of the metrics reported by the paper,
 *Dissecting Span Identification Tasks with Performance Prediction* (Papay, et
-*al, 2020) with a few changes:
+*al, 2020) with a few additions:
 
-- I will only reproduce the span characteristics (length, distinctiveness,
-  etc.) to check if the span analyzer is working as intended.
-- I will add a few datasets to increase the breadth of this study. In particular, I'll
-  be checking some of the nested NER datasets from Yu, et al's work (2020) on
-  *Named Entity Recognition as Dependency Parsing*.
+- New datasets on Nested NER, particularly GENIA and the Shared BioNLP task.
+  The GENIA dataset is sourced from the parsed IOB version in the source repository
+  of *A Boundary-aware Neural Model for Nested Named Entity Recognition* (Zheng, et al 2019).
+- I will also be adding a few more datasets such as the Healthsea dataset, the
+  EBM-NLP corpus, and the ToxicSpans dataset.
 
 
 ## 📋 project.yml
@@ -28,9 +28,10 @@ Commands are only re-run if their inputs have changed.
 | Command | Description |
 | --- | --- |
 | `install` | Install dependencies |
-| `parse-riqua` | Parse the RiQuA (Rich Quotation Analysis) quotation dataset into the spaCy format. |
-| `analyze-riqua` | Get span analysis for the RiQuA quotation dataset. |
-| `parse-parc` | Parse the PARC (Penn Attribution Relation Corpus) dataset into the spaCy format. |
+| `riqua` | Parse and analyze the RiQuA (Rich Quotation Analysis) quotation dataset. |
+| `conll2000` | Parse the ConLL 2003 English dataset. |
+| `conll2003` | Parse and analyze the ConLL 2003 English dataset. |
+| `genia` | Parse and analyze the GENIA dataset (corpus from Boundary Aware Nested NER paper) |
 
 ### ⏭ Workflows
 
@@ -41,6 +42,6 @@ inputs have changed.
 
 | Workflow | Steps |
 | --- | --- |
-| `parse-all` | `parse-riqua` |
+| `analyze-all` | `riqua` &rarr; `conll2000` &rarr; `conll2003` &rarr; `genia` |
 
 <!-- SPACY PROJECT: AUTO-GENERATED DOCS END (do not remove) -->

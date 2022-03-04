@@ -2,24 +2,27 @@ title: "Reproducibility Study for Span Type Characteristics"
 description: |
   This project aims to reproduce some of the metrics reported by the paper,
   *Dissecting Span Identification Tasks with Performance Prediction* (Papay, et
-  *al, 2020) with a few changes:
+  *al, 2020) with a few additions:
 
-  - I will only reproduce the span characteristics (length, distinctiveness,
-    etc.) to check if the span analyzer is working as intended.
-  - I will add a few datasets to increase the breadth of this study. In particular, I'll
-    be checking some of the nested NER datasets from Yu, et al's work (2020) on
-    *Named Entity Recognition as Dependency Parsing*.
+  - New datasets on Nested NER, particularly GENIA and the Shared BioNLP task.
+    The GENIA dataset is sourced from the parsed IOB version in the source repository
+    of *A Boundary-aware Neural Model for Nested Named Entity Recognition* (Zheng, et al 2019).
+  - I will also be adding a few more datasets such as the Healthsea dataset, the
+    EBM-NLP corpus, and the ToxicSpans dataset.
 
 # These are the directories that the project needs. The project CLI will make
 # sure that they always exist.
-directories: ["assets", "corpus", "scripts"]
+directories: ["assets", "corpus", "scripts", "metrics"]
 
 # Workflows are sequences of commands (see below) executed in order. You can
 # run them via "spacy project run [workflow]". If a commands's inputs/outputs
 # haven't changed, it won't be re-run.
 workflows:
-  parse-all:
-    - parse-riqua
+  analyze-all:
+    - riqua
+    - conll2000
+    - conll2003
+    - genia
 
 # Project commands, specified in a style similar to CI config files (e.g. Azure
 # pipelines). The name is the command name that lets you trigger the command
@@ -30,15 +33,31 @@ commands:
     help: "Install dependencies"
     script:
       - "pip3 install --user -r requirements.txt"
-  - name: "parse-riqua"
-    help: "Parse the RiQuA (Rich Quotation Analysis) quotation dataset into the spaCy format."
+  - name: "riqua"
+    help: "Parse and analyze the RiQuA (Rich Quotation Analysis) quotation dataset."
     script:
       - "python3 -m scripts.riqua"
-  - name: "analyze-riqua"
-    help: "Get span analysis for the RiQuA quotation dataset."
-    script:
-      - "spacy-span-analyzer corpus/riqua.spacy"
-  - name: "parse-conll2003"
-    help: "Parse the ConLL 2003 English dataset into the spaCy format (using Spans)."
+      - "spacy-span-analyzer corpus/riqua.spacy --output metrics/riqua.json"
+    outputs:
+      - "metrics/riqua.json"
+  - name: "conll2000"
+    help: "Parse the ConLL 2003 English dataset."
     script:
       - "python3 -m scripts.conll --dataset conll2000"
+      - "spacy-span-analyzer corpus/conll2000.spacy --output metrics/conll2000.json"
+    outputs:
+      - "metrics/conll2000.json"
+  - name: "conll2003"
+    help: "Parse and analyze the ConLL 2003 English dataset."
+    script:
+      - "python3 -m scripts.conll --dataset conll2003"
+      - "spacy-span-analyzer corpus/conll2003.spacy --output metrics/conll2003.json"
+    outputs:
+      - "metrics/conll2003.json"
+  - name: "genia"
+    help: "Parse and analyze the GENIA dataset (corpus from Boundary Aware Nested NER paper)"
+    script:
+      - "python3 -m scripts.genia"
+      - "spacy-span-analyzer corpus/genia.spacy --output metrics/genia.json"
+    outputs:
+      - "metrics/genia.json"
