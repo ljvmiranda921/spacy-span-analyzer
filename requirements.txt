@@ -4,3 +4,4 @@ numpy
 # CLI
 wasabi
 typer
+textacy
