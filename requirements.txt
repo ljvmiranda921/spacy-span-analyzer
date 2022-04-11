@@ -1,6 +1,7 @@
 spacy>=3.1.0
 scipy
 numpy
+textacy
 # CLI
 wasabi
 typer
