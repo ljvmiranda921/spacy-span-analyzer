@@ -168,11 +168,12 @@ class SpanAnalyzer:
         """
         spans: Dict[str, List[Span]] = {}
         for doc in self.docs:
-            for span in doc.spans[spans_key]:
-                if span.label_ not in spans:
-                    spans[span.label_] = []
-                else:
-                    spans[span.label_].append(span)
+            if doc.spans.get(spans_key):
+                for span in doc.spans[spans_key]:
+                    if span.label_ not in spans:
+                        spans[span.label_] = []
+                    else:
+                        spans[span.label_].append(span)
 
         return spans
 
@@ -187,25 +188,26 @@ class SpanAnalyzer:
         """
         bounds: Dict[str, SpanBoundaries] = {}
         for doc in self.docs:
-            for span in doc.spans[spans_key]:
-                if span.label_ not in bounds:
-                    bounds[span.label_] = {"start": [], "end": []}
-                else:
-                    # Get span boundaries within a window
-                    # We append Spans instead of Tokens so that it's consistent
-                    # with the _get_distribution() method
-                    for offset in range(window_size):
-                        span_bound_start_idx = span.start - (offset + 1)
-                        if span_bound_start_idx >= 0:
-                            bounds[span.label_]["start"].append(
-                                doc[span_bound_start_idx : span_bound_start_idx + 1]
-                            )
+            if doc.spans.get(spans_key):
+                for span in doc.spans[spans_key]:
+                    if span.label_ not in bounds:
+                        bounds[span.label_] = {"start": [], "end": []}
+                    else:
+                        # Get span boundaries within a window
+                        # We append Spans instead of Tokens so that it's consistent
+                        # with the _get_distribution() method
+                        for offset in range(window_size):
+                            span_bound_start_idx = span.start - (offset + 1)
+                            if span_bound_start_idx >= 0:
+                                bounds[span.label_]["start"].append(
+                                    doc[span_bound_start_idx : span_bound_start_idx + 1]
+                                )
 
-                        span_bound_end_idx = span.end + (offset + 1)
-                        if span_bound_end_idx < len(doc):
-                            bounds[span.label_]["end"].append(
-                                doc[span_bound_end_idx : span_bound_end_idx + 1]
-                            )
+                            span_bound_end_idx = span.end + (offset + 1)
+                            if span_bound_end_idx < len(doc):
+                                bounds[span.label_]["end"].append(
+                                    doc[span_bound_end_idx : span_bound_end_idx + 1]
+                                )
         return bounds
 
     def _get_distribution(
