@@ -1,3 +1,5 @@
+> 💫 This library is now integrated into spaCy v3.4 as [`debug data`](https://spacy.io/api/cli#debug-data)!
+
 # spacy-span-analyzer
 
 A simple tool to analyze the [Spans](https://spacy.io/api/span) in your
